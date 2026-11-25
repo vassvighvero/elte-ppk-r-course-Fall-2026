@@ -20,6 +20,8 @@ You will have to create 3 plots based on the datasets and instructions detailed 
 knitr::opts_chunk$set(echo = FALSE)
 library(tidyverse)
 library(tidytuesdayR)
+library(dplyr)
+library(ggplot2)
 ```
 
 ## Task 1: Climbing expeditions
@@ -30,8 +32,28 @@ The 2020-09-22 TidyTueday datasets are about climbing expeditions. From the thre
 -   The bars are ordered by the sum of all expeditions (use `fct_reorder()`).
 -   The bar colors use the viridis palette and light theme.
 
-```{r}
+```{r, message=FALSE}
+# 1. Load the dataset
+expeditions <- readr::read_csv("C:/Users/BI/Downloads/expeditions.csv")
+glimpse(expeditions)
 
+# 2. Keep the 15 most frequent peaks, remove Other, reorder the sum of all expeditions
+peak_data <- expeditions %>%
+  mutate(peak_name = forcats::fct_lump(peak_name, n = 15)) %>%
+  filter(peak_name != "Other") %>%
+  count(peak_name, season, name = "total_expeditions") %>%
+  group_by(peak_name) %>%
+  mutate(peak_total = sum(total_expeditions)) %>%
+  ungroup() %>%
+  mutate(peak_name = forcats::fct_reorder(peak_name, peak_total))
+
+# 3. Create bar chart
+ggplot(peak_data, aes(x = total_expeditions, y = peak_name, fill = season)) +
+  geom_col() +
+  scale_fill_viridis_d() +
+  theme_light() +
+  labs(x = "Number of expeditions", y = NULL, fill = "season", title = "The 15 most popular peaks stacked by season of expedition") +
+  theme(legend.position = "bottom")
 ```
 
 ## Task 2: PhDs awarded
@@ -44,8 +66,26 @@ Notes:
 -   To make the x axis breaks pretty, use `scales::pretty_breaks()`, to make the y axis labels comma formatted, use `scales::comma_format()`.
 -   The line size is 1.2, the colors are from the brewer "Dark2" palette. The theme is set to minimal.
 
-```{r}
+```{r, message=FALSE}
+# 1. Load and inspect dataset
+phd_field <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2019/2019-02-19/phd_by_field.csv")
+glimpse(phd_field)
+unique(phd_field$broad_field)
 
+# 2. Count all PhDs by broad fields and by year
+phd_by_year <- phd_field %>%
+  group_by(year, broad_field) %>%
+  summarise(total_phds = sum(n_phds, na.rm = TRUE))
+
+# 3. Create line chart
+ggplot(phd_by_year, aes(x = year, y = total_phds, color = broad_field, group = broad_field)) +
+  geom_line(linewidth = 1.2) +
+  labs(x = NULL, y = NULL, color = "Broad field", title = "Number of awarded Ph.D.-s in the US by year") +
+  theme_minimal() + 
+  theme(legend.text = element_text(size = 7), legend.title = element_text(size = 9), legend.key.width = unit(0.4, "cm")) +
+  scale_color_brewer(palette = "Dark2") +
+  scale_x_continuous(breaks = scales::pretty_breaks()) +
+  scale_y_continuous(labels = scales::comma_format()) 
 ```
 
 ## Task 3: Commute in the US
