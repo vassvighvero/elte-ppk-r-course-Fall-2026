@@ -20,6 +20,8 @@ You will have to create 3 plots based on the datasets and instructions detailed 
 knitr::opts_chunk$set(echo = FALSE)
 library(tidyverse)
 library(tidytuesdayR)
+library(dplyr)
+library(ggplot2)
 ```
 
 ## Task 1: Climbing expeditions
@@ -30,8 +32,27 @@ The 2020-09-22 TidyTueday datasets are about climbing expeditions. From the thre
 -   The bars are ordered by the sum of all expeditions (use `fct_reorder()`).
 -   The bar colors use the viridis palette and light theme.
 
-```{r}
+```{r, message=FALSE}
+# 1. Load the dataset
+expeditions <- readr::read_csv("C:/Users/BI/Downloads/expeditions.csv")
 
+# 2. Keep the 15 most frequent peaks, remove Other, reorder the sum of all expeditions
+peak_data <- expeditions %>%
+  mutate(peak_name = forcats::fct_lump(peak_name, n = 15)) %>%
+  filter(peak_name != "Other") %>%
+  count(peak_name, season, name = "total_expeditions") %>%
+  group_by(peak_name) %>%
+  mutate(peak_total = sum(total_expeditions)) %>%
+  ungroup() %>%
+  mutate(peak_name = forcats::fct_reorder(peak_name, peak_total))
+
+# 3. Create bar chart
+ggplot(peak_data, aes(x = total_expeditions, y = peak_name, fill = season)) +
+  geom_col() +
+  scale_fill_viridis_d() +
+  theme_light() +
+  labs(x = "Number of expeditions", y = NULL, fill = "season", title = "The 15 most popular peaks stacked by season of expedition") +
+  theme(legend.position = "bottom")
 ```
 
 ## Task 2: PhDs awarded
