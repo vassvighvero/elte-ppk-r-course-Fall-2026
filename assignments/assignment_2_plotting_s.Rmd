@@ -70,7 +70,6 @@ Notes:
 # 1. Load and inspect dataset
 phd_field <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2019/2019-02-19/phd_by_field.csv")
 glimpse(phd_field)
-unique(phd_field$broad_field)
 
 # 2. Count all PhDs by broad fields and by year
 phd_by_year <- phd_field %>%
@@ -98,6 +97,31 @@ Notes:
 -   Both axis scales are log transformed and the labels comma formatted, using `scales::comma_format()`
 -   The point size is 2, . The theme is set to light.
 
-```{r}
+```{r, message=FALSE}
+# 1. Load and inspect dataset
+commute_mode <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2019/2019-11-05/commute.csv")
+glimpse(commute_mode)
+
+# 2. Aggregate the number of commuters by state and mode
+commute_by_state <- commute_mode %>%
+  group_by(state_abb, state_region, mode) %>%
+  summarise(total_commuters = sum(n, na.rm = TRUE), .groups = "drop")
+
+# 3. Separate mode into columns Walk and Bike
+commute_wide <- commute_by_state %>%
+  filter(mode %in% c("Walk", "Bike")) %>%
+  select(state_abb, state_region, mode, total_commuters) %>%
+  pivot_wider(names_from = mode, values_from = total_commuters)
+
+# 4. Create scatterplot
+ggplot(commute_wide, aes(x = Walk, y = Bike, color = state_region)) +
+  geom_point(size = 2) +
+  geom_text(aes(label = state_abb), color = "black", size = 3) +
+  scale_x_log10(labels = scales::comma_format()) +
+  scale_y_log10(labels = scales::comma_format()) +
+  labs(x = "Number of ppl walking to work (log N)", y = "Number of ppl biking to work (log N)", color = "State region", title = "Number of people walking vs. biking to work in each USA state") +
+  theme_light()+
+  theme(legend.text = element_text(size = 7), legend.title = element_text(size = 9))
+
 
 ```
