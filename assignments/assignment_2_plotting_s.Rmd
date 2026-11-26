@@ -70,7 +70,6 @@ Notes:
 # 1. Load and inspect dataset
 phd_field <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2019/2019-02-19/phd_by_field.csv")
 glimpse(phd_field)
-unique(phd_field$broad_field)
 
 # 2. Count all PhDs by broad fields and by year
 phd_by_year <- phd_field %>%
